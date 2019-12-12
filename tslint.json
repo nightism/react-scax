@@ -3,28 +3,38 @@
     "extends": [
         "tslint:recommended"
     ],
-    "linterOptions": {
-        "exclude": [
-            "src/backup/*"
-        ]
-    },
     "jsRules": {},
     "rules": {
-        "quotemark": [true, "single", "jsx-double"],
-        "ordered-imports": [false],
-        "object-literal-sort-keys": [false],
-        "arrow-parens": [false],
+        "arrow-parens": [true, "ban-single-arg-parens"],
+        "indent": [true, "spaces", 4],
+        "interface-over-type-literal": false,
+        "member-access": [true, "no-public"],
+        "member-ordering": [
+            true,
+            {
+              "order": [
+                "public-static-field",
+                "private-static-field",
+                "public-instance-field",
+                "private-instance-field",
+                "public-constructor",
+                "private-constructor",
+                "public-instance-method",
+                "protected-instance-method",
+                "private-instance-method"
+              ]
+            }
+          ],
         "no-console": [true, "log"],
-        "no-string-literal": [false],
-        "indent": [true, "spaces", 2],
-        "member-access": [false],
-        "interface-over-type-literal": [false],
-        "no-empty-interface": [false],
-        "member-ordering": [false],
-        "no-unused-expression": true,
-        "semicolon": [true, "always"],
         "no-empty": false,
-        "space-before-function-paren": [true, false]
+        "no-empty-interface": false,
+        "no-string-literal": false,
+        "no-unused-expression": true,
+        "object-literal-sort-keys": true,
+        "ordered-imports": true,
+        "quotemark": [true, "single", "jsx-double"],
+        "semicolon": [true, "always"],
+        "space-before-function-paren": false
     },
     "rulesDirectory": []
 }
