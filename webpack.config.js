@@ -1,5 +1,5 @@
 const path = require('path');
-const pkg = require('./package.json'); // Load package info
+const pkg = require('./package.json');
 
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const htmlWebpackPlugin = new HtmlWebpackPlugin({

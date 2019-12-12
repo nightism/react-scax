@@ -1,8 +1,8 @@
-import typescript from "rollup-plugin-typescript2"; // For transpile typescript
-import commonjs from "rollup-plugin-commonjs"; // For transpile the imported commonJS modules
-import external from "rollup-plugin-peer-deps-external"; // For excluding peerDependancies
-import resolve from "rollup-plugin-node-resolve"; // For taking care of the imported third-party modules
-import dts from 'rollup-plugin-dts'; // For bundling .d.ts files
+import typescript from "rollup-plugin-typescript2";
+import commonjs from "rollup-plugin-commonjs";
+import external from "rollup-plugin-peer-deps-external";
+import resolve from "rollup-plugin-node-resolve";
+import dts from 'rollup-plugin-dts';
 
 import pkg from "./package.json";
 
