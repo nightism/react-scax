@@ -29,31 +29,18 @@ const attach: IAttach = (
         if (isAttachedComponentClass) {
             Component = component;
         } else if (isAttachedComponentWrapper) {
-            Component = cloneDeep(component.render) || (() => null);
-
-            const useForceUpdate = () => {
-                const [, scaxSetState] = useState({});
-                return () => scaxSetState({});
-            };
             /**
-             * If the passed in component is a wrapper component, we use hook to get access
-             * to the state handler we defined(scaxSetState), and we construct a new function component Component
-             * with prototype = { setState: () => scaxSetState() }.
-             * Also this function component should be wrapped by forwarRef to pass the ref furtherly downward
+             * TODO: This if branch does that same as the previous one.
+             * May need to implements more provessing for wrapper components.
              */
-            // tslint:disable-next-line
-            Component = React.forwardRef<any, React.ComponentProps<C>>(function (props, ref) {
-                Component.prototype = {};
-                Component.prototype.setState = useForceUpdate();
-                return (component.render || (() => null))(props, ref);
-            });
-            Component.displayName = displayName;
+            Component = component;
         } else { // If passed-in component is a user defined function component
             Component = class extends React.Component<React.ComponentProps<C>> {
                 render() {
                     return (component as any)(this.props);
                 }
             };
+            Component.displayName = displayName;
         }
 
         const attachWrapperFactory = () => {
