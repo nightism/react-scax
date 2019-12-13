@@ -6,7 +6,7 @@ React-Scax is an NPM package intended to synchronize AJAX calls and JavaScript P
 
 ## Installation
 
-Use the package manager [npm](https://pip.pypa.io/en/stable/) to install react-scax.
+Use the package manager [npm](https://docs.npmjs.com/cli/install) to install react-scax.
 
 ```bash
 npm install react-scax
@@ -94,8 +94,9 @@ const scaxerBatchConfigs: TScaxerBatchConfiguration<ScaxerDataType> = {
 ```typescript
 const pool = createPool(POOL_NAME, scaxerBatchConfigs)
 ```
-#### Call Scaxer
+#### Get and Call Scaxer
 ```typescript
+scaxerII = pool.getScaxer(SCAXER_NAME_II)
 scaxerII.call({ num: '1000' })
 ```
 
