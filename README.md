@@ -12,8 +12,8 @@ Use the package manager [npm](https://pip.pypa.io/en/stable/) to install react-s
 npm install react-scax
 ```
 
-## Quick Start
-
+## Usage
+### Quick Start
 ```javascript
 import React from 'react'
 import {
@@ -50,6 +50,55 @@ class ScaxerComponent extends React.Component {
 
 export attach(POOL_NAME, [SCAXER_NAME])(ScaxerComponent)
 ```
+
+### with TypeScript
+#### Type define for Scaxer
+```typescript
+type ScaxerDataType = {
+    [SCAXER_NAME_I]: {
+        TParamType: number;
+        TDataType: string;
+        TResultType: { data: string };
+    },
+    [SCAXER_NAME_II]: {
+        TParamType: { num: string };
+        TDataType: string;
+        TErrorType: number;
+        TResultType: { data: string };
+        TReasonType: { error: number };
+    }
+}
+```
+#### Scaxer configuration
+```typescript
+import { TScaxerBatchConfiguration } from 'react-scax'
+
+const scaxerBatchConfigs: TScaxerBatchConfiguration<ScaxerDataType> = {
+    [SCAXER_NAME_I]: {
+        blocking: SCAXER_BLOCKING.UPCOMING,
+        mapResultToData: (result: { data: number }) => result.data,
+        promise: (param: number) => new Promise(resolve => {
+            setTimeout(() => resolve({ data: param + '' }), 2000);
+        }),
+    },
+    [SCAXER_NAME_II]: {
+        onFulfillment: SCAXER_NAME_I,
+        onRejection: () => { console.log('FAILED.'); },
+        mapResultToData: result => result.data,
+        mapReasonToError: reason => reason.error,
+        promise: createPromise(Template.types.AJAX_JSON_TEMPLATE,
+            { url: 'http://your-api.com/api/v1/', method: AjaxCallMethod.GET }),
+    }
+```
+#### Pool initiation
+```typescript
+const pool = createPool(POOL_NAME, scaxerBatchConfigs)
+```
+#### Call Scaxer
+```typescript
+scaxerII.call({ num: '1000' })
+```
+
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
