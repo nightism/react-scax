@@ -29,6 +29,10 @@ const attach: IAttach = (
         if (isAttachedComponentClass) {
             Component = component;
         } else if (isAttachedComponentWrapper) {
+            /**
+             * TODO: This if branch does that same as the previous one.
+             * May need to implements more provessing for wrapper components.
+             */
             Component = component;
         } else { // If passed-in component is a user defined function component
             Component = class extends React.Component<React.ComponentProps<C>> {
