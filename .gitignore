@@ -1,6 +1,11 @@
+# Package file
 /node_modules
 /package-lock.json
 
+# Release & test
 /src.dts
 /build
 /coverage
+
+# Dev
+/__dev__/component
