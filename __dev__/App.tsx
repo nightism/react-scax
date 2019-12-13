@@ -8,7 +8,7 @@ import {
 //   AttachedClassComponent2,
   ChainedAttachedClassComponent,
 //   ExplicitlyChainedAttachedClassComponent,
-} from './testMY';
+} from './testKT';
 
 const App: React.FC = () => {
   const ref = useRef(null);

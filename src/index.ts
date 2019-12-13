@@ -11,7 +11,7 @@ export const attach: IAttach = attachFunc;
 
 export const AjaxCallMethod = AJAX_CALL_METHOD;
 export const ScaxerState = SCAXER_STATE;
-export const Scheme = {
+export const Template = {
    changeSchemeSettings: configureTemplate,
    createPromise: createTemplatePromiseFunction,
    types: TEMPLATE_TYPE,
