@@ -1,5 +1,5 @@
-import { TScaxerBatchConfiguration } from '../src/types';
 import { SCAXER_BLOCKING } from '../src/common/constants';
+import { TScaxerBatchConfiguration } from '../src/types';
 
 export const API1_NAME = 'api1';
 export const API2_NAME = 'api1';
