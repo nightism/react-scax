@@ -30,7 +30,7 @@
         "no-empty-interface": false,
         "no-string-literal": false,
         "no-unused-expression": true,
-        "object-literal-sort-keys": true,
+        "object-literal-sort-keys": false,
         "ordered-imports": true,
         "quotemark": [true, "single", "jsx-double"],
         "semicolon": [true, "always"],
