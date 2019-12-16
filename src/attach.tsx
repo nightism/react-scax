@@ -1,5 +1,4 @@
-import cloneDeep from 'lodash.clonedeep';
-import React, { useState } from 'react';
+import React from 'react';
 import { error, isAttachWrapper, isClassComponent } from './common/utils';
 import { getPoolView } from './pool/pools';
 import { IAttach, IScaxerManager, TAttachedComponentType, TScaxerSubscriberType } from './types';
