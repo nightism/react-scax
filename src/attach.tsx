@@ -49,13 +49,23 @@ const attach: IAttach = (
                 > {
                 childRef = (this.props.innerRef as React.RefObject<any>) || React.createRef<any>();
                 unsubscribHandlers: TScaxerSubscriberType[] = [];
+                delayedChildUpdates: any;
 
                 setChildState() {
-                    this.childRef.current.setState({});
+                    if (this.childRef.current) {
+                        this.childRef.current.setState({});
+                    } else {
+                        this.delayedChildUpdates = () => this.childRef.current.setState({});
+                    }
                 }
-                componentDidMount() {
+                componentWillMount() {
                     const setStateCallback = () => this.setChildState();
                     this.unsubscribHandlers = scaxers.map(scaxer => scaxer.injectSubscription(setStateCallback));
+                }
+                componentDidMount() {
+                    if (this.delayedChildUpdates) {
+                        this.delayedChildUpdates();
+                    }
                 }
                 componentWillUnmount() {
                     this.unsubscribHandlers.forEach(unsubscribHandler => unsubscribHandler());
