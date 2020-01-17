@@ -8,4 +8,4 @@
 /coverage
 
 # Dev
-/__dev__/component
+/__dev__/component/*
