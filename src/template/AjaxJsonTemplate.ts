@@ -77,7 +77,7 @@ ITemplate<TAjaxJsonConfigType, TAjaxJsonParamType, TAjaxJsonResultType> {
             if (!config.method || config.method === AJAX_CALL_METHOD.GET) {
                 urlWithParams = urlWithParams + (params ? `?${encodeObjectAsQueryString(params)}` : '');
             } else if (params) {
-                Object.assign({ body: JSON.stringify(params) }, requestOptions);
+                Object.assign(requestOptions, { body: JSON.stringify(params) });
             }
 
             /**
