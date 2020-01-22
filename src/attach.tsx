@@ -50,12 +50,35 @@ const attach: IAttach = (
                 childRef = (this.props.innerRef as React.RefObject<any>) || React.createRef<any>();
                 unsubscribHandlers: TScaxerSubscriberType[] = [];
 
+                /**
+                 * This property will store a child component's setState call which needs to be delayed.
+                 * The reason why this setState call needs to be delayed is at the time it's called,
+                 * the child component is not yet completely mounted, e.g. it's componentDidMount call returned.
+                 * In this case, the React Ref object is not yet pointing to the right component, and instead, it
+                 * is pointing to null.
+                 */
+                delayedChildUpdate: any;
+
                 setChildState() {
-                    this.childRef.current.setState({});
+                    if (this.childRef.current) {
+                        this.childRef.current.setState({});
+                    } else {
+                        // if the React ref is not pointting to the child component, we save the setState call.
+                        this.delayedChildUpdate = () => this.childRef.current.setState({});
+                    }
                 }
-                componentDidMount() {
+                componentWillMount() {
                     const setStateCallback = () => this.setChildState();
                     this.unsubscribHandlers = scaxers.map(scaxer => scaxer.injectSubscription(setStateCallback));
+                }
+                componentDidMount() {
+                    if (this.delayedChildUpdate) {
+                        /**
+                         * Here we call the saved setState call of child component.
+                         * We can ensure the React Ref object is pointing to the right child component now.
+                         */
+                        this.delayedChildUpdate();
+                    }
                 }
                 componentWillUnmount() {
                     this.unsubscribHandlers.forEach(unsubscribHandler => unsubscribHandler());

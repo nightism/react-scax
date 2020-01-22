@@ -3,7 +3,7 @@ import './App.css';
 /**
  * Import your test component here.
  * Before commiting, please make sure all your customized testing components are in ./component folder.
- * Please remember to restore this file to the original status.
+ * Please remember to restore this file to the original status(refer to ./App.template.tsx).
  */
 
 const App: React.FC = () => {
