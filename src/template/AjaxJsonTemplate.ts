@@ -3,7 +3,9 @@ import { encodeObjectAsQueryString } from '../common/utils';
 import { IStaticTemplate, ITemplate, TCreateGenericPromiseFunctionType } from '../types';
 
 type TAjaxJsonConfigType = { url: string, method?: AJAX_CALL_METHOD, getOptions?: () => RequestInit };
-type TAjaxJsonParamType = { [key: string]: string | number | TAjaxJsonParamType };
+type TAjaxJsonParamType = {
+    [key: string]: boolean | string | number | string[] | number[] | boolean[] | TAjaxJsonParamType,
+};
 type TAjaxJsonResultType = any;
 
 type TAjaxJsonTemplateConfigType = { getOptions: () => RequestInit };
