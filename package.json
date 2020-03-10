@@ -1,6 +1,6 @@
 {
   "name": "react-scax",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "",
   "main": "build/index.js",
   "module": "build/index.es.js",
