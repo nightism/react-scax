@@ -38,8 +38,14 @@ export type TScaxerSubscriberType
 /**
  * Scaxer caller api
  */
-export type TScaxerCallType<TParamType>
-    = (p: TParamType) => void;
+export type TScaxerCallType<TParamType, TDataType, TErrorType, TResultType, TReasonType>
+= (
+    p: TParamType,
+    extra: {
+        onFulfillment: TOnFulfilmentType<TDataType, TResultType>,
+        onRejection: TOnRejectionType<TErrorType, TReasonType>,
+    },
+) => void;
 
 /**
  * The data type of a scaxer.
@@ -140,7 +146,7 @@ export interface IScaxerView
     readonly getError: () => TErrorType | undefined;
     readonly getResult: () => TResultType | undefined;
     readonly getReason: () => TReasonType | undefined;
-    readonly call: TScaxerCallType<TParamType>;
+    readonly call: TScaxerCallType<TParamType, TDataType, TErrorType, TResultType, TReasonType>;
 }
 
 /**
