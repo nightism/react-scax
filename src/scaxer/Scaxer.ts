@@ -55,9 +55,10 @@ IScaxerManager, IScaxer<TParamType, TDataType, TErrorType, TResultType, TReasonT
     }
 
     getData = (): TDataType | undefined => {
-        if (this.state !== SCAXER_STATE.FULFILLED) {
+        if (this.state !== SCAXER_STATE.FULFILLED && this.state !== SCAXER_STATE.CONSUMED) {
             return undefined;
         }
+        this.state = SCAXER_STATE.CONSUMED;
         return this.data;
     }
 
