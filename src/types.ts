@@ -42,8 +42,8 @@ export type TScaxerCallType<TParamType, TDataType, TErrorType, TResultType, TRea
 = (
     p: TParamType,
     extra?: {
-        onFulfillment: TOnFulfilmentType<TDataType, TResultType>,
-        onRejection: TOnRejectionType<TErrorType, TReasonType>,
+        onFulfillment?: TOnFulfilmentType<TDataType, TResultType>,
+        onRejection?: TOnRejectionType<TErrorType, TReasonType>,
     },
 ) => void;
 
