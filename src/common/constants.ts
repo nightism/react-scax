@@ -6,11 +6,30 @@ export const EMPTY = {
 };
 
 export enum SCAXER_STATE {
+    /**
+     * Scaxer has not been called yet.
+     */
     WAITING = 0,
+    /**
+     * Scaxer has been called and is being resolved.
+     */
     RESOLVING = 1,
+    /**
+     * Scaxer has been resolved successfully.
+     */
     FULFILLED = 2,
+    /**
+     * Scaxer has been rejected.
+     */
     REJECTED = 3,
+    /**
+     * Scaxer has been interrupted due to exceptions in handlers.
+     */
     INTERRUPTED = 4,
+    /**
+     * Scaxer has been resolved successfully and its data has been read for at least once.
+     */
+    CONSUMED = 5,
 }
 
 export enum SCAXER_BLOCKING {

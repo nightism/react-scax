@@ -2,7 +2,7 @@ import assert from 'assert';
 import { SCAXER_BLOCKING, SCAXER_STATE } from '../common/constants';
 import {
     IScaxer, IScaxerConfiguration, IScaxerManager, IScaxerView,
-    TPromiseFunctionType, TScaxerSubscriberType,
+    TOnFulfilmentType, TOnRejectionType, TPromiseFunctionType, TScaxerSubscriberType,
 } from '../types';
 
 interface ICancelablePromise<TResultType> {
@@ -46,8 +46,8 @@ IScaxerManager, IScaxer<TParamType, TDataType, TErrorType, TResultType, TReasonT
     mapResultToData = (result: TResultType): TDataType | undefined => undefined;
     mapReasonToError = (result: TReasonType): TErrorType | undefined => undefined;
 
-    onFulfillment = (data?: TDataType) => {};
-    onRejection = (error?: TErrorType) => {};
+    onFulfillment: TOnFulfilmentType<TDataType, TResultType> = (data?: TDataType, result?: TResultType) => {};
+    onRejection: TOnRejectionType<TErrorType, TReasonType> = (error?: TErrorType, reason?: TReasonType) => {};
     handleException = (exc: Error): void => { throw exc; };
 
     getState = (): SCAXER_STATE | undefined => {
@@ -55,9 +55,10 @@ IScaxerManager, IScaxer<TParamType, TDataType, TErrorType, TResultType, TReasonT
     }
 
     getData = (): TDataType | undefined => {
-        if (this.state !== SCAXER_STATE.FULFILLED) {
+        if (this.state !== SCAXER_STATE.FULFILLED && this.state !== SCAXER_STATE.CONSUMED) {
             return undefined;
         }
+        this.state = SCAXER_STATE.CONSUMED;
         return this.data;
     }
 
@@ -99,7 +100,13 @@ IScaxerManager, IScaxer<TParamType, TDataType, TErrorType, TResultType, TReasonT
         return unsubscribe;
     }
 
-    call = (params: TParamType): void => {
+    call = (
+        params: TParamType,
+        extra?: {
+            onFulfillment?: TOnFulfilmentType<TDataType, TResultType>,
+            onRejection?: TOnRejectionType<TErrorType, TReasonType>,
+        },
+        ): void => {
         if (this.blocking === SCAXER_BLOCKING.UPCOMING) {
             if (this.ongoingPromise) {
                 this.ongoingPromise.cancel();
@@ -111,7 +118,7 @@ IScaxerManager, IScaxer<TParamType, TDataType, TErrorType, TResultType, TReasonT
         } else if (this.blocking === SCAXER_BLOCKING.IGNORING) {
         }
 
-        this.ongoingPromise = this.makeCancelablePromise(params);
+        this.ongoingPromise = this.makeCancelablePromise(params, extra?.onFulfillment, extra?.onRejection);
         this.ongoingPromise.promise.catch((error: any) => {
             if (!error.isCanceld) {
                 throw new Error(error);
@@ -135,7 +142,15 @@ IScaxerManager, IScaxer<TParamType, TDataType, TErrorType, TResultType, TReasonT
      * @param params any parameters uesd by the promise function
      * @return ICancelablePromise<TResultType> object including a cancle() property
      */
-    private makeCancelablePromise: (params: TParamType) => ICancelablePromise<TResultType> = (params: TParamType) => {
+    private makeCancelablePromise: (
+        params: TParamType,
+        inlineOnFulfillment?: TOnFulfilmentType<TDataType, TResultType>,
+        inlineOnRejection?: TOnRejectionType<TErrorType, TReasonType>,
+    ) => ICancelablePromise<TResultType> = (
+        params: TParamType,
+        inlineOnFulfillment?: TOnFulfilmentType<TDataType, TResultType>,
+        inlineOnRejection?: TOnRejectionType<TErrorType, TReasonType>,
+    ) => {
         let canceled = false;
 
         this.state = SCAXER_STATE.RESOLVING;
@@ -178,9 +193,15 @@ IScaxerManager, IScaxer<TParamType, TDataType, TErrorType, TResultType, TReasonT
 
                     // perform all subsequence actions and callbacks
                     if (this.state === SCAXER_STATE.FULFILLED) {
-                        this.onFulfillment(this.data);
+                        this.onFulfillment(this.data, this.result);
+                        if (inlineOnFulfillment) {
+                            inlineOnFulfillment(this.data, this.result);
+                        }
                     } else if (this.state === SCAXER_STATE.REJECTED) {
                         this.onRejection(this.error);
+                        if (inlineOnRejection) {
+                            inlineOnRejection(this.error, this.reason);
+                        }
                     }
 
                     // resovle this promise in the end
