@@ -41,7 +41,7 @@ export type TScaxerSubscriberType
 export type TScaxerCallType<TParamType, TDataType, TErrorType, TResultType, TReasonType>
 = (
     p: TParamType,
-    extra: {
+    extra?: {
         onFulfillment: TOnFulfilmentType<TDataType, TResultType>,
         onRejection: TOnRejectionType<TErrorType, TReasonType>,
     },
