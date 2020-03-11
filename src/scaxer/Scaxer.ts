@@ -126,6 +126,10 @@ IScaxerManager, IScaxer<TParamType, TDataType, TErrorType, TResultType, TReasonT
         });
     }
 
+    isFulfilled: () => boolean = () => {
+        return this.state === SCAXER_STATE.FULFILLED || this.state === SCAXER_STATE.CONSUMED;
+    }
+
     updateSubscriber = (): void => {
         this.subscriberList.forEach((subscriberHandler: TScaxerSubscriberType) => { subscriberHandler(); });
     }
@@ -192,7 +196,7 @@ IScaxerManager, IScaxer<TParamType, TDataType, TErrorType, TResultType, TReasonT
                     this.updateSubscriber();
 
                     // perform all subsequence actions and callbacks
-                    if (this.state === SCAXER_STATE.FULFILLED) {
+                    if (this.isFulfilled()) {
                         this.onFulfillment(this.data, this.result);
                         if (inlineOnFulfillment) {
                             inlineOnFulfillment(this.data, this.result);

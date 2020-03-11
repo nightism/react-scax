@@ -147,6 +147,7 @@ export interface IScaxerView
     readonly getResult: () => TResultType | undefined;
     readonly getReason: () => TReasonType | undefined;
     readonly call: TScaxerCallType<TParamType, TDataType, TErrorType, TResultType, TReasonType>;
+    readonly isFulfilled: () => boolean;
 }
 
 /**
