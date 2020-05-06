@@ -2,8 +2,8 @@ import React from 'react';
 import { error, isAttachWrapper, isClassComponent } from './common/utils';
 import { getPoolView } from './pool/pools';
 import {
-    IAttach, IPoolView, IScaxerManager,
-    TAttachedComponentType, TScaxerSubscriberType,
+    IAttach, IPoolView, IScaxerManager, TAttachedComponentType,
+    TAttachWrapperComponentType, TScaxerSubscriberType,
 } from './types';
 
 const attach: IAttach = (
@@ -28,36 +28,24 @@ const attach: IAttach = (
         return scaxer;
     });
 
-    return <C extends TAttachedComponentType<React.ComponentProps<C>>>(component: C) => {
+    return <C extends TAttachedComponentType<React.ComponentProps<C>, C>>(component: C) => {
         const displayName = component.displayName || component.name || 'Component';
         const isAttachedComponentClass = isClassComponent(component);
         const isAttachedComponentWrapper = isAttachWrapper(component);
 
-        let Component: any;
-        if (isAttachedComponentClass) {
-            Component = component;
-        } else if (isAttachedComponentWrapper) {
-            /**
-             * TODO: This if branch does that same as the previous one.
-             * May need to implements more provessing for wrapper components.
-             */
-            Component = component;
-        } else { // If passed-in component is a user defined function component
-            Component = class extends React.PureComponent<React.ComponentProps<C>> {
-                render() {
-                    return (component as any)(this.props);
-                }
-            };
-            Component.displayName = displayName;
-        }
+        type TInnerComponent = (
+            React.ComponentClass<React.ComponentProps<C>>
+            | TAttachWrapperComponentType<React.ComponentProps<C>>
+        ) & React.Component<React.ComponentProps<C>, unknown>;
 
         const attachWrapperFactory = () => {
-            type WrapperComponentProps = React.ComponentProps<C> & { innerRef: React.RefObject<any> };
+            type WrapperComponentProps = React.ComponentProps<C>
+            & { innerRef: React.RefObject<TInnerComponent> };
 
-            // tslint:disable-next-line: max-classes-per-file
             class WrapperComponent extends React.Component<WrapperComponentProps> {
                 /** `childRef` is used to reference the inner component */
-                childRef = (this.props.innerRef as React.RefObject<any>) || React.createRef<any>();
+                childRef = this.props.innerRef as React.RefObject<TInnerComponent>
+                || React.createRef<TInnerComponent>();
 
                 /** `unsubscribHandlers` is used to manage all subscriber functions */
                 unsubscribHandlers: TScaxerSubscriberType[] = [];
@@ -90,7 +78,15 @@ const attach: IAttach = (
                         // If the React ref is not pointing to the child component, we save the setState
                         // call, and trigger the update in {@link WrapperComponent.componentDidMount}.
                         // This situation only happens before {@link WrapperComponent.render} returns.
-                        this.delayedChildUpdate = () => this.childRef.current.forceUpdate();
+                        // At the moment this callback is triggered, `this.childRef.current` is guaranteed
+                        // to be not `null`.
+                        this.delayedChildUpdate = () => {
+                            if (this.childRef.current) {
+                                this.childRef.current.forceUpdate();
+                            } else {
+                                console.warn('React-Scax WrapperComponent encountered null as childRef.current.');
+                            }
+                        };
                     }
                 }
 
@@ -109,6 +105,20 @@ const attach: IAttach = (
                 }
 
                 render() {
+                    let Component: any;
+                    if (isAttachedComponentClass || isAttachedComponentWrapper) {
+                        Component = component;
+                    } else {
+                        // If passed-in component is a user defined function component
+                        // tslint:disable-next-line: max-classes-per-file
+                        Component = class extends React.PureComponent<React.ComponentProps<C>> {
+                            render() {
+                                return (component as any)(this.props);
+                            }
+                        };
+                        Component.displayName = displayName;
+                    }
+
                     return <Component
                         {...this.props as React.ComponentProps<C>}
                         ref={this.childRef}
@@ -116,7 +126,7 @@ const attach: IAttach = (
                 }
             }
 
-            const forwarded = React.forwardRef<any, React.ComponentProps<C>>((props, ref) => {
+            const forwarded = React.forwardRef<TInnerComponent, React.ComponentProps<C>>((props, ref) => {
                 // innerRef below is defined as a prop of WrapperComponent
                 return <WrapperComponent {...props} innerRef={ref} />;
             });
