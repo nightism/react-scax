@@ -1,26 +1,34 @@
 import React from 'react';
 import { error, isAttachWrapper, isClassComponent } from './common/utils';
 import { getPoolView } from './pool/pools';
-import { IAttach, IScaxerManager, TAttachedComponentType, TScaxerSubscriberType } from './types';
+import {
+    IAttach, IPoolView, IScaxerManager,
+    TAttachedComponentType, TScaxerSubscriberType,
+} from './types';
 
 const attach: IAttach = (
-    poolName: string,
-    scaxerNames: string[] = [],
+    poolToBeAttached: string | IPoolView,
+    scaxersToBeAttached: Array<string | IScaxerManager> = [],
 ) => {
-    const pool = getPoolView(poolName);
-    if (!pool) {
-        error('Can not find matching pool');
+    let pool: IPoolView;
+    if (typeof poolToBeAttached === 'string') {
+        pool = getPoolView(poolToBeAttached);
+    } else {
+        pool = poolToBeAttached;
     }
 
-    return <C extends TAttachedComponentType<React.ComponentProps<C>>>(component: C) => {
-        const scaxers = scaxerNames.map(scaxerName => {
-            const scaxer: IScaxerManager = pool.getScaxerManager(scaxerName);
-            if (!scaxer) {
-                error('Can not find matching scaxer.');
-            }
-            return scaxer;
-        });
+    const scaxers: IScaxerManager[] = scaxersToBeAttached.map((scaxerToBeAttached: string | IScaxerManager) => {
+        let scaxer: IScaxerManager;
+        if (typeof scaxerToBeAttached === 'string') {
+            scaxer = pool.getScaxerManager(scaxerToBeAttached);
+        } else {
+            scaxer = scaxerToBeAttached;
+        }
 
+        return scaxer;
+    });
+
+    return <C extends TAttachedComponentType<React.ComponentProps<C>>>(component: C) => {
         const displayName = component.displayName || component.name || 'Component';
         const isAttachedComponentClass = isClassComponent(component);
         const isAttachedComponentWrapper = isAttachWrapper(component);

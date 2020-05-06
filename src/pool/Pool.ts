@@ -40,7 +40,7 @@ export default class Pool<TScaxerDataTypes extends TScaxerDataTypeMap> implement
     ): TScaxerViewType<TScaxerDataTypes, K> {
         const scaxer = this.scaxers[scaxerName];
         if (!scaxer) {
-            error('Unknown scaxer name');
+            error('Unknown scaxer name.');
         }
         return scaxer as any as TScaxerViewType<TScaxerDataTypes, K>;
     }
