@@ -43,7 +43,7 @@ const attach: IAttach = (
              */
             Component = component;
         } else { // If passed-in component is a user defined function component
-            Component = class extends React.Component<React.ComponentProps<C>> {
+            Component = class extends React.PureComponent<React.ComponentProps<C>> {
                 render() {
                     return (component as any)(this.props);
                 }
@@ -81,17 +81,16 @@ const attach: IAttach = (
                 }
 
                 /**
-                 * `setChildState` force the subscriber components to rerender using setState({}).
-                 * BUG: this method does not work properly when inner compoennt is of type PureComponent
+                 * `setChildState` force the subscriber components to rerender using forceUpdate().
                  */
                 setChildState() {
                     if (this.childRef.current) {
-                        this.childRef.current.setState({});
+                        this.childRef.current.forceUpdate();
                     } else {
                         // If the React ref is not pointing to the child component, we save the setState
                         // call, and trigger the update in {@link WrapperComponent.componentDidMount}.
                         // This situation only happens before {@link WrapperComponent.render} returns.
-                        this.delayedChildUpdate = () => this.childRef.current.setState({});
+                        this.delayedChildUpdate = () => this.childRef.current.forceUpdate();
                     }
                 }
 
