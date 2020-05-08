@@ -1,76 +1,95 @@
 import React from 'react';
 import { error, isAttachWrapper, isClassComponent } from './common/utils';
 import { getPoolView } from './pool/pools';
-import { IAttach, IScaxerManager, TAttachedComponentType, TScaxerSubscriberType } from './types';
+import {
+    IAttach, IPoolView, IScaxerManager, TAttachedComponentType,
+    TAttachWrapperComponentType, TScaxerSubscriberType,
+} from './types';
 
 const attach: IAttach = (
-    poolName: string,
-    scaxerNames: string[] = [],
+    poolToBeAttached: string | IPoolView,
+    scaxersToBeAttached: Array<string | IScaxerManager> = [],
 ) => {
-    const pool = getPoolView(poolName);
-    if (!pool) {
-        error('Can not find matching pool');
+    let pool: IPoolView;
+    if (typeof poolToBeAttached === 'string') {
+        pool = getPoolView(poolToBeAttached);
+    } else {
+        pool = poolToBeAttached;
     }
 
-    return <C extends TAttachedComponentType<React.ComponentProps<C>>>(component: C) => {
-        const scaxers = scaxerNames.map(scaxerName => {
-            const scaxer: IScaxerManager = pool.getScaxerManager(scaxerName);
-            if (!scaxer) {
-                error('Can not find matching scaxer');
-            }
-            return scaxer;
-        });
+    const scaxers: IScaxerManager[] = scaxersToBeAttached.map((scaxerToBeAttached: string | IScaxerManager) => {
+        let scaxer: IScaxerManager;
+        if (typeof scaxerToBeAttached === 'string') {
+            scaxer = pool.getScaxerManager(scaxerToBeAttached);
+        } else {
+            scaxer = scaxerToBeAttached;
+        }
 
+        return scaxer;
+    });
+
+    return <C extends TAttachedComponentType<React.ComponentProps<C>, C>>(component: C) => {
         const displayName = component.displayName || component.name || 'Component';
         const isAttachedComponentClass = isClassComponent(component);
         const isAttachedComponentWrapper = isAttachWrapper(component);
-        let Component: any;
-        if (isAttachedComponentClass) {
-            Component = component;
-        } else if (isAttachedComponentWrapper) {
-            /**
-             * TODO: This if branch does that same as the previous one.
-             * May need to implements more provessing for wrapper components.
-             */
-            Component = component;
-        } else { // If passed-in component is a user defined function component
-            Component = class extends React.Component<React.ComponentProps<C>> {
-                render() {
-                    return (component as any)(this.props);
-                }
-            };
-            Component.displayName = displayName;
-        }
+
+        type TInnerComponent = (
+            React.ComponentClass<React.ComponentProps<C>>
+            | TAttachWrapperComponentType<React.ComponentProps<C>>
+        ) & React.Component<React.ComponentProps<C>, unknown>;
 
         const attachWrapperFactory = () => {
-            // tslint:disable-next-line: max-classes-per-file
-            class WrapperComponent extends React.Component<
-                React.ComponentProps<C> & { innerRef: React.RefObject<any> }
-                > {
-                childRef = (this.props.innerRef as React.RefObject<any>) || React.createRef<any>();
+            type WrapperComponentProps = React.ComponentProps<C>
+            & { innerRef: React.RefObject<TInnerComponent> };
+
+            class WrapperComponent extends React.Component<WrapperComponentProps> {
+                /** `childRef` is used to reference the inner component */
+                childRef = this.props.innerRef as React.RefObject<TInnerComponent>
+                || React.createRef<TInnerComponent>();
+
+                /** `unsubscribHandlers` is used to manage all subscriber functions */
                 unsubscribHandlers: TScaxerSubscriberType[] = [];
 
                 /**
-                 * This property will store a child component's setState call which needs to be delayed.
-                 * The reason why this setState call needs to be delayed is at the time it's called,
-                 * the child component is not yet completely mounted, e.g. it's componentDidMount call returned.
-                 * In this case, the React Ref object is not yet pointing to the right component, and instead, it
-                 * is pointing to null.
+                 * `delayedChildUpdate` will store a child component's setState call which needs to be delayed.
+                 * The reason why this setState call needs to be delayed is that at the time it's called, the
+                 * child component is not yet completely mounted, i.e. before componentDidMount call returned.
+                 * In this case, the React Ref object is not yet pointing to the right component, and instead,
+                 * it is pointing to null.
                  */
                 delayedChildUpdate: any;
 
-                setChildState() {
-                    if (this.childRef.current) {
-                        this.childRef.current.setState({});
-                    } else {
-                        // if the React ref is not pointting to the child component, we save the setState call.
-                        this.delayedChildUpdate = () => this.childRef.current.setState({});
-                    }
-                }
-                componentWillMount() {
+                constructor(props: WrapperComponentProps, context?: any) {
+                    super(props, context);
+
+                    // Subscribe each scaxer for the inner component.
+                    /** Force updator for the inner component. */
                     const setStateCallback = () => this.setChildState();
                     this.unsubscribHandlers = scaxers.map(scaxer => scaxer.injectSubscription(setStateCallback));
                 }
+
+                /**
+                 * `setChildState` force the subscriber components to rerender using forceUpdate().
+                 */
+                setChildState() {
+                    if (this.childRef.current) {
+                        this.childRef.current.forceUpdate();
+                    } else {
+                        // If the React ref is not pointing to the child component, we save the setState
+                        // call, and trigger the update in {@link WrapperComponent.componentDidMount}.
+                        // This situation only happens before {@link WrapperComponent.render} returns.
+                        // At the moment this callback is triggered, `this.childRef.current` is guaranteed
+                        // to be not `null`.
+                        this.delayedChildUpdate = () => {
+                            if (this.childRef.current) {
+                                this.childRef.current.forceUpdate();
+                            } else {
+                                console.warn('React-Scax WrapperComponent encountered null as childRef.current.');
+                            }
+                        };
+                    }
+                }
+
                 componentDidMount() {
                     if (this.delayedChildUpdate) {
                         /**
@@ -80,10 +99,26 @@ const attach: IAttach = (
                         this.delayedChildUpdate();
                     }
                 }
+
                 componentWillUnmount() {
                     this.unsubscribHandlers.forEach(unsubscribHandler => unsubscribHandler());
                 }
+
                 render() {
+                    let Component: any;
+                    if (isAttachedComponentClass || isAttachedComponentWrapper) {
+                        Component = component;
+                    } else {
+                        // If passed-in component is a user defined function component
+                        // tslint:disable-next-line: max-classes-per-file
+                        Component = class extends React.PureComponent<React.ComponentProps<C>> {
+                            render() {
+                                return (component as any)(this.props);
+                            }
+                        };
+                        Component.displayName = displayName;
+                    }
+
                     return <Component
                         {...this.props as React.ComponentProps<C>}
                         ref={this.childRef}
@@ -91,8 +126,10 @@ const attach: IAttach = (
                 }
             }
 
-            const forwarded = React.forwardRef<any, React.ComponentProps<C>>((props, ref) =>
-                <WrapperComponent {...props} innerRef={ref} />);
+            const forwarded = React.forwardRef<TInnerComponent, React.ComponentProps<C>>((props, ref) => {
+                // innerRef below is defined as a prop of WrapperComponent
+                return <WrapperComponent {...props} innerRef={ref} />;
+            });
             forwarded.displayName = displayName;
 
             return forwarded;
