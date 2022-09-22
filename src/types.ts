@@ -209,14 +209,15 @@ export interface IPoolView {
 /********************************************************* */
 /****************** Attach Related Types⬇️ *****************/
 /********************************************************* */
-export type TAttachedComponentType<TProps> = React.ComponentType<TProps
-    & React.RefAttributes<any>>
-    & { render?: (props: TProps, ref?: React.LegacyRef<any>) => React.ReactElement };
+export type TAttachedComponentType<TProps, C> =
+    React.ComponentType<TProps & React.RefAttributes<C>>
+    & { render?: (props: TProps, ref?: React.LegacyRef<C>) => React.ReactElement };
 export type TAttachWrapperComponentType<TProps> =
     React.ForwardRefExoticComponent<React.PropsWithoutRef<TProps> & React.RefAttributes<any>>;
 
-export type TAttachHOC = <C extends TAttachedComponentType<React.ComponentProps<C>>>(component: C) =>
-    TAttachWrapperComponentType<React.ComponentProps<C>>;
+export type TAttachHOC =
+    <C extends TAttachedComponentType<React.ComponentProps<C>, C>>(component: C) =>
+        TAttachWrapperComponentType<React.ComponentProps<C>>;
 
 export interface IAttach {
     // tslint:disable-next-line
